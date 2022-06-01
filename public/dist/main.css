@@ -1,0 +1,240 @@
+.main__container {
+  height: 100vh;
+}
+
+a {
+  color: black;
+}
+a:hover {
+  color: #6f42c1;
+  text-decoration: none;
+}
+
+p {
+  text-align: justify;
+}
+
+.searchbar__input {
+  border-radius: 18px 0 0 18px;
+  border: none;
+  padding: 0 10px;
+  font-size: 16px;
+  width: 40vw;
+  height: 40px;
+}
+.searchbar__input:focus {
+  outline: none;
+}
+.searchbar__button {
+  border-style: none;
+  height: 40px;
+  padding: 0 15px;
+  background: #7274fa;
+  color: white;
+  font-weight: bolder;
+}
+.searchbar__button:hover {
+  cursor: pointer;
+  background: #16175c;
+}
+
+.link__icon {
+  width: 70px;
+  padding: 10px;
+}
+
+.block {
+  margin: 30px 0 80px;
+  position: relative;
+}
+.block__img {
+  margin: 0 auto;
+  width: 100%;
+}
+.block__title {
+  font-size: 35px;
+  display: block;
+  text-align: center;
+  margin: 0;
+}
+.block__link {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-decoration: none;
+  font-size: 25px;
+  background: pink;
+  color: black;
+  padding: 5px 30px;
+  border-radius: 20px;
+}
+.block__link:hover {
+  text-decoration: none;
+  color: black;
+  background: #ee97a6;
+}
+.block__photo {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  bottom: -15px;
+}
+.block--products {
+  flex-wrap: wrap;
+  background: #c4d8d6;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
+.block--offcanvas {
+  top: 0;
+  left: -100vw;
+  transition: 1s;
+}
+
+.photo__img {
+  width: 90%;
+}
+.photo__img--product {
+  width: 100%;
+  height: 200px;
+}
+.photo__caption {
+  width: 100%;
+  text-align: center;
+  font-size: 20px;
+  padding: 10px 0;
+}
+.photo__caption--cost {
+  color: black;
+  font-size: 30px;
+  padding-bottom: 0;
+}
+.photo__caption--product {
+  padding-top: 0;
+  color: black;
+  visibility: hidden;
+}
+.photo--product {
+  margin: 0;
+  flex-direction: column;
+}
+.photo__icon {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.product {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+.product__link {
+  width: 250px;
+  background: white;
+  color: black;
+  margin: 0 10px 15px;
+}
+.product__link:hover {
+  box-shadow: 0px 0px 15px -8px black;
+  text-decoration: none;
+}
+.product__link:hover > figure > figcaption {
+  visibility: visible;
+}
+
+.icon {
+  fill: white;
+}
+.icon--facebook:hover {
+  fill: #3b5998;
+}
+.icon--whatsapp:hover {
+  fill: #128C7E;
+}
+.icon--twitter:hover {
+  fill: #00acee;
+}
+
+.flip-card-inner {
+  transition: transform 1.5s;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(360deg);
+}
+
+.account {
+  background: #c08ff1;
+  padding-top: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: top;
+  align-items: center;
+  color: black;
+  width: 100%;
+}
+.account__title {
+  font-size: 40px;
+  font-family: "Times New Roman", Times, serif;
+  margin: 0 0 30px;
+  text-align: center;
+  font-weight: bold;
+}
+.account__text {
+  font-size: 30px;
+}
+.account__input {
+  border-radius: 20px;
+  border: none;
+  padding: 12px;
+  font-size: 25px;
+  width: 80vw;
+  max-width: 400px;
+  margin-bottom: 30px;
+}
+.account__input:focus {
+  outline: none;
+}
+.account__button {
+  width: 30vw;
+  border-radius: 20px;
+  border: none;
+  padding: 12px;
+  font-size: 30px;
+  margin: 0 auto;
+  font-weight: bold;
+  background: #9f418e;
+  max-width: 300px;
+  text-align: center;
+  color: white;
+}
+.account__button:hover {
+  cursor: pointer;
+  background: #82375b;
+  color: white;
+}
+.account__checkbox {
+  display: none;
+}
+.account__checkbox ~ article:nth-of-type(1), .account__checkbox ~ form:nth-of-type(1) {
+  display: none;
+}
+.account__checkbox ~ article:nth-of-type(2), .account__checkbox ~ form:nth-of-type(2) {
+  display: flex;
+}
+.account__checkbox:checked ~ article:nth-of-type(1), .account__checkbox:checked ~ form:nth-of-type(1) {
+  display: flex;
+}
+.account__checkbox:checked ~ article:nth-of-type(2), .account__checkbox:checked ~ form:nth-of-type(2) {
+  display: none;
+}
+
+.cover {
+  background-size: cover;
+}
+
+/*# sourceMappingURL=main.css.map */

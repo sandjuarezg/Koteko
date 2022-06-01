@@ -8,7 +8,7 @@ import (
 	"github.com/johnfercher/maroto/pkg/props"
 )
 
-func GeneratePDF(product Producto, cant int) (err error) {
+func GenerateBuyPDF(product Producto, cant int) (err error) {
 	m := pdf.NewMaroto(consts.Portrait, consts.Letter)
 
 	m.Row(40, func() {

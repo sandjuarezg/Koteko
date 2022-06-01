@@ -35,3 +35,30 @@ func GetRandomAviso(db *sql.DB) (aviso string, err error) {
 
 	return
 }
+
+func GetAllAvisos(db *sql.DB) (avisos []Aviso, err error) {
+	rows, err := db.Query("SELECT id_aviso, aviso FROM avisos")
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	if rows.Err() != nil {
+		return
+	}
+
+	var aviso Aviso
+	for rows.Next() {
+		err = rows.Scan(
+			&aviso.IDAviso,
+			&aviso.Aviso,
+		)
+		if err != nil {
+			return
+		}
+
+		avisos = append(avisos, aviso)
+	}
+
+	return
+}

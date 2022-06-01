@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -36,6 +38,10 @@ func main() {
 	http.Handle("/signin", signin(db))
 	http.Handle("/login", login(db))
 	http.Handle("/buy", buy(db))
+	http.Handle("/donation", donation(db))
+	http.Handle("/avisos", avisos(db))
+
+	http.Handle("/avisosWS", avisosWS(db))
 
 	fmt.Println("Listening on localhost:8080")
 
@@ -53,7 +59,7 @@ func index(db *sql.DB) http.Handler {
 
 		temp, err := template.ParseFiles("./public/index.html")
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return
@@ -61,7 +67,7 @@ func index(db *sql.DB) http.Handler {
 
 		aviso, err := models.GetRandomAviso(db)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return
@@ -108,7 +114,7 @@ func search(db *sql.DB) http.Handler {
 
 		products, err := models.SearchProductWithAllDetailsByName(db, r.FormValue("busqueda"))
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return
@@ -116,7 +122,7 @@ func search(db *sql.DB) http.Handler {
 
 		aviso, err := models.GetRandomAviso(db)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return
@@ -132,7 +138,7 @@ func search(db *sql.DB) http.Handler {
 
 		temp, err := template.ParseFiles("./public/html/list_products.html")
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return
@@ -161,7 +167,7 @@ func categoria(db *sql.DB) http.Handler {
 
 		aviso, err := models.GetRandomAviso(db)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return
@@ -173,7 +179,7 @@ func categoria(db *sql.DB) http.Handler {
 		if category == "todos" {
 			products, err = models.GetAllProducts(db)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
 
 				return
@@ -181,7 +187,7 @@ func categoria(db *sql.DB) http.Handler {
 		} else {
 			products, err = models.GetProductsByCategory(db, category, false)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
 
 				return
@@ -198,7 +204,7 @@ func categoria(db *sql.DB) http.Handler {
 
 		temp, err := template.ParseFiles("./public/html/list_products.html")
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return
@@ -392,7 +398,39 @@ func buy(db *sql.DB) http.Handler {
 			return
 		}
 
-		err = models.GeneratePDF(product, cantidad)
+		err = models.GenerateBuyPDF(product, cantidad)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		products, err := models.GetProductsByCategory(db, product.Categoria, true)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		data := struct {
+			Products []models.Producto
+			Product  models.Producto
+		}{
+			Products: products,
+			Product:  product,
+		}
+
+		t, err := template.ParseFiles("./public/html/product.html")
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		err = t.Execute(w, data)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -403,3 +441,139 @@ func buy(db *sql.DB) http.Handler {
 		return
 	})
 }
+
+func donation(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+
+			return
+		}
+
+		defer fmt.Printf("Response from %s\n", r.URL.RequestURI())
+
+		if err := r.ParseForm(); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		cantidad := r.FormValue("cantidad")
+
+		err := models.DoDonation(db, "1", cantidad)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		t, err := template.ParseFiles("./public/html/donation.html")
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		err = t.Execute(w, nil)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		return
+	})
+}
+
+func avisos(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+
+			return
+		}
+
+		defer fmt.Printf("Response from %s\n", r.URL.RequestURI())
+
+		avisos, err := models.GetAllAvisos(db)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		temp, err := template.ParseFiles("./public/admin/avisos.html")
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		err = temp.Execute(w, avisos)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		return
+	})
+}
+
+func avisosWS(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			avisos, err := models.GetAllAvisos(db)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				return
+			}
+
+			data, err := json.Marshal(avisos)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+
+			_, err = io.WriteString(w, string(data))
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				return
+			}
+
+		case "POST":
+			var aviso models.Aviso
+
+			err := json.NewDecoder(r.Body).Decode(&aviso)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			fmt.Println(aviso)
+
+		case "DELETE":
+		}
+	})
+}
+
+// GET    		- http://localhost:8080/avisosWS
+// POST   		- http://localhost:8080/avisosWS
+// POST (edit) 	- http://localhost:8080/avisosWS?id=X
+// DELETE 		- http://localhost:8080/avisosWS?id=X

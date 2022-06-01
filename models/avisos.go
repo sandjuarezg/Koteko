@@ -62,3 +62,40 @@ func GetAllAvisos(db *sql.DB) (avisos []Aviso, err error) {
 
 	return
 }
+
+func CreateNewAviso(db *sql.DB, text string) (err error) {
+	_, err = db.Exec("INSERT INTO avisos(aviso) VALUES (?)", text)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func DeleteAvisoByID(db *sql.DB, id string) (err error) {
+	row, err := db.Exec("DELETE from avisos WHERE id_aviso = ?", id)
+	if err != nil {
+		return
+	}
+
+	_, err = row.RowsAffected()
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func UpdateAvisoByID(db *sql.DB, id, newText string) (err error) {
+	row, err := db.Exec("UPDATE avisos SET aviso = ? WHERE id_aviso = ?", newText, id)
+	if err != nil {
+		return
+	}
+
+	_, err = row.RowsAffected()
+	if err != nil {
+		return
+	}
+
+	return
+}

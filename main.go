@@ -2,9 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,6 +11,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/sandjuarezg/koteko/models"
+	"github.com/sandjuarezg/koteko/ws"
 )
 
 const (
@@ -41,7 +40,16 @@ func main() {
 	http.Handle("/donation", donation(db))
 	http.Handle("/avisos", avisos(db))
 
-	http.Handle("/avisosWS", avisosWS(db))
+	http.Handle("/avisosWS", ws.AvisosWS(db))
+	http.Handle("/categoriasWS", ws.CategoriasWS(db))
+	// http.Handle("/coloresWS", avisosWS(db))
+	// http.Handle("/donacionesWS", avisosWS(db))
+	// http.Handle("/permisosWS", avisosWS(db))
+	// http.Handle("/productosWS", avisosWS(db))
+	// http.Handle("/rolesWS", avisosWS(db))
+	// http.Handle("/tiposWS", avisosWS(db))
+	// http.Handle("/usuariosWS", avisosWS(db))
+	// http.Handle("/ventasWS", avisosWS(db))
 
 	fmt.Println("Listening on localhost:8080")
 
@@ -525,55 +533,3 @@ func avisos(db *sql.DB) http.Handler {
 		return
 	})
 }
-
-func avisosWS(db *sql.DB) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			avisos, err := models.GetAllAvisos(db)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
-			}
-
-			data, err := json.Marshal(avisos)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-
-			_, err = io.WriteString(w, string(data))
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
-			}
-
-		case "POST":
-			var aviso models.Aviso
-
-			err := json.NewDecoder(r.Body).Decode(&aviso)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			fmt.Println(aviso)
-
-		case "DELETE":
-		}
-	})
-}
-
-// GET    		- http://localhost:8080/avisosWS
-// POST   		- http://localhost:8080/avisosWS
-// POST (edit) 	- http://localhost:8080/avisosWS?id=X
-// DELETE 		- http://localhost:8080/avisosWS?id=X

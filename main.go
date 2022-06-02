@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/smtp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -40,6 +41,7 @@ func main() {
 	http.Handle("/signin", signin(db))
 	http.Handle("/buy", buy(db))
 	http.Handle("/donation", donation(db))
+	http.Handle("/emailPassword", sendEmail(db))
 
 	// crud
 	http.Handle("/avisos", crud.Avisos(db))
@@ -48,7 +50,7 @@ func main() {
 	http.Handle("/rol", crud.Rol(db))
 	http.Handle("/tipo", crud.Tipo(db))
 	http.Handle("/productoCRUD", crud.Producto(db))
-	http.Handle("/usuarios", crud.Usuario(db))
+	http.Handle("/usuario", crud.Usuario(db))
 
 	// ws
 	http.Handle("/avisosWS", ws.AvisosWS(db))
@@ -493,5 +495,64 @@ func donation(db *sql.DB) http.Handler {
 		}
 
 		return
+	})
+}
+
+func sendEmail(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer fmt.Printf("Response from %s\n", r.URL.RequestURI())
+
+		if err := r.ParseForm(); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		// 25, 465 o 587
+		// msg := gomail.NewMessage()
+		// msg.SetHeader("From", "koteko.oficial@gmail.com")
+		// msg.SetHeader("To", r.FormValue("emailSentPass"))
+		// msg.SetHeader("Subject", "Koteko-Password")
+		// msg.SetBody("text/html", "<b>New Password: 123</b>")
+
+		// n := gomail.NewDialer("smtp.gmail.com", 587, "koteko.oficial@gmail.com", "Contra123")
+
+		// if err := n.DialAndSend(msg); err != nil {
+		// 	log.Printf("smtp error: %s", err)
+
+		// 	return
+		// }
+
+		from := "koteko.oficial@gmail.com"
+		pass := "Contra123"
+		to := r.FormValue("emailSentPass")
+		msg := "Nueva password: 123"
+
+		err := smtp.SendMail("smtp.gmail.com:587",
+			smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+			from, []string{to}, []byte(msg))
+
+		if err != nil {
+			log.Printf("smtp error: %s", err)
+
+			return
+		}
+
+		t, err := template.ParseFiles("./public/html/account.html")
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		err = t.Execute(w, nil)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
 	})
 }

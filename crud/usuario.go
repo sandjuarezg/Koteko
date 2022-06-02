@@ -15,15 +15,20 @@ func Usuario(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer fmt.Printf("Response from %s\n", r.URL.RequestURI())
 
-		path := strings.TrimPrefix(r.URL.String(), "/colores?accion=")
+		path := strings.TrimPrefix(r.URL.String(), "/usuario?accion=")
 		split := strings.Split(path, "&")
 		accion := split[0]
 
 		switch accion {
 		case "add":
-			color := r.FormValue("color")
+			var us models.Usuario
 
-			err := models.CreateNewColor(db, color)
+			us.Nombre = r.FormValue("nombre")
+			us.Email = r.FormValue("email")
+			us.Password = r.FormValue("password")
+			us.IDRol = 2
+
+			err := models.CreateNewUser(us, db)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -35,7 +40,7 @@ func Usuario(db *sql.DB) http.Handler {
 			split := strings.Split(split[1], "=")
 			id := split[1]
 
-			err := models.DeleteColorByID(db, id)
+			err := models.DeleteUserByID(db, id)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -47,9 +52,12 @@ func Usuario(db *sql.DB) http.Handler {
 			split := strings.Split(split[1], "=")
 			id := split[1]
 
-			editColor := r.FormValue("editColor")
+			var us models.Usuario
 
-			err := models.UpdateColorByID(db, id, editColor)
+			us.Password = r.FormValue("editPassword")
+			us.IDRol = 2
+
+			err := models.UpdateUserByID(db, us, id)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -58,7 +66,7 @@ func Usuario(db *sql.DB) http.Handler {
 			}
 		}
 
-		colores, err := models.GetAllColores(db)
+		users, err := models.GetAllUsers(db)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -66,7 +74,7 @@ func Usuario(db *sql.DB) http.Handler {
 			return
 		}
 
-		temp, err := template.ParseFiles("./admin/colores.html")
+		temp, err := template.ParseFiles("./admin/usuario.html")
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -74,7 +82,7 @@ func Usuario(db *sql.DB) http.Handler {
 			return
 		}
 
-		err = temp.Execute(w, colores)
+		err = temp.Execute(w, users)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 

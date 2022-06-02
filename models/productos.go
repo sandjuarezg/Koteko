@@ -10,7 +10,7 @@ type Producto struct {
 	IDProducto  int
 	Producto    string
 	Descripcion string
-	Precio      float32
+	Precio      float64
 	Cantidad    int
 	Img         string
 	Tipo        string

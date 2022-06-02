@@ -43,6 +43,12 @@ func main() {
 
 	// crud
 	http.Handle("/avisos", crud.Avisos(db))
+	http.Handle("/categorias", crud.Categorias(db))
+	http.Handle("/colores", crud.Colores(db))
+	http.Handle("/rol", crud.Rol(db))
+	http.Handle("/tipo", crud.Tipo(db))
+	http.Handle("/productoCRUD", crud.Producto(db))
+	http.Handle("/usuarios", crud.Usuario(db))
 
 	// ws
 	http.Handle("/avisosWS", ws.AvisosWS(db))

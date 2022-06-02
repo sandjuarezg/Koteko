@@ -11,19 +11,19 @@ import (
 	"github.com/sandjuarezg/koteko/models"
 )
 
-func Avisos(db *sql.DB) http.Handler {
+func Rol(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer fmt.Printf("Response from %s\n", r.URL.RequestURI())
 
-		path := strings.TrimPrefix(r.URL.String(), "/avisos?accion=")
+		path := strings.TrimPrefix(r.URL.String(), "/rol?accion=")
 		split := strings.Split(path, "&")
 		accion := split[0]
 
 		switch accion {
 		case "add":
-			aviso := r.FormValue("aviso")
+			rol := r.FormValue("rol")
 
-			err := models.CreateNewAviso(db, aviso)
+			err := models.CreateNewRol(db, rol)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -35,7 +35,7 @@ func Avisos(db *sql.DB) http.Handler {
 			split := strings.Split(split[1], "=")
 			id := split[1]
 
-			err := models.DeleteAvisoByID(db, id)
+			err := models.DeleteRolByID(db, id)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -47,9 +47,9 @@ func Avisos(db *sql.DB) http.Handler {
 			split := strings.Split(split[1], "=")
 			id := split[1]
 
-			aviso := r.FormValue("editAviso")
+			editRol := r.FormValue("editRol")
 
-			err := models.UpdateAvisoByID(db, id, aviso)
+			err := models.UpdateRolByID(db, id, editRol)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -58,7 +58,7 @@ func Avisos(db *sql.DB) http.Handler {
 			}
 		}
 
-		avisos, err := models.GetAllAvisos(db)
+		roles, err := models.GetAllRoles(db)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -66,7 +66,7 @@ func Avisos(db *sql.DB) http.Handler {
 			return
 		}
 
-		temp, err := template.ParseFiles("./admin/aviso.html")
+		temp, err := template.ParseFiles("./admin/rol.html")
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -74,7 +74,7 @@ func Avisos(db *sql.DB) http.Handler {
 			return
 		}
 
-		err = temp.Execute(w, avisos)
+		err = temp.Execute(w, roles)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 

@@ -49,22 +49,42 @@ func AvisosWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			if r.Header.Get("id") == "" {
-				err = models.CreateNewAviso(db, aviso.Aviso)
-				if err != nil {
-					log.Println(err)
-					w.WriteHeader(http.StatusInternalServerError)
+			err = models.CreateNewAviso(db, aviso.Aviso)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
 
-					return
-				}
-			} else {
-				err = models.UpdateAvisoByID(db, r.Header.Get("id"), aviso.Aviso)
-				if err != nil {
-					log.Println(err)
-					w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 
-					return
-				}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+
+			err = json.NewEncoder(w).Encode(Message{Body: "successful action"})
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				return
+			}
+
+		case "PUT":
+			var aviso models.Aviso
+
+			err := json.NewDecoder(r.Body).Decode(&aviso)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				return
+			}
+
+			err = models.UpdateAvisoByID(db, r.Header.Get("id"), aviso.Aviso)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				return
 			}
 
 			w.Header().Set("Content-Type", "application/json")

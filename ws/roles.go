@@ -10,13 +10,13 @@ import (
 	"github.com/sandjuarezg/koteko/models"
 )
 
-func CategoriasWS(db *sql.DB) http.Handler {
+func RolesWS(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer fmt.Printf("Response from %s:%s\n", r.URL.RequestURI(), r.Method)
 
 		switch r.Method {
 		case "GET":
-			categorias, err := models.GetAllCategorias(db)
+			roles, err := models.GetAllRoles(db)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -27,16 +27,17 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 
-			err = json.NewEncoder(w).Encode(categorias)
+			err = json.NewEncoder(w).Encode(roles)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
+
 				return
 			}
 
 		case "POST":
-			var categoria models.Categoria
+			var rol models.Rol
 
-			err := json.NewDecoder(r.Body).Decode(&categoria)
+			err := json.NewDecoder(r.Body).Decode(&rol)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -44,42 +45,22 @@ func CategoriasWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			err = models.CreateNewCategoria(db, categoria.Categoria)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
+			if r.Header.Get("id") == "" {
+				err = models.CreateNewRol(db, rol.Rol)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
 
-				return
-			}
+					return
+				}
+			} else {
+				err = models.UpdateRolByID(db, r.Header.Get("id"), rol.Rol)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-
-			err = json.NewEncoder(w).Encode(Message{Body: "successful action"})
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
-			}
-
-		case "PUT":
-			var categoria models.Categoria
-
-			err := json.NewDecoder(r.Body).Decode(&categoria)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
-			}
-
-			err = models.UpdateCategoriaByID(db, r.Header.Get("id"), categoria.Categoria)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
+					return
+				}
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -94,7 +75,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			}
 
 		case "DELETE":
-			err := models.DeleteCategoriaByID(db, r.Header.Get("id"))
+			err := models.DeleteRolByID(db, r.Header.Get("id"))
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)

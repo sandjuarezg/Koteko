@@ -6,37 +6,66 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/sandjuarezg/koteko/models"
 )
 
-func CategoriasWS(db *sql.DB) http.Handler {
+func ProductosWS(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer fmt.Printf("Response from %s:%s\n", r.URL.RequestURI(), r.Method)
 
 		switch r.Method {
 		case "GET":
-			categorias, err := models.GetAllCategorias(db)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
+			if r.Header.Get("id") == "" {
+				products, err := models.GetAllProducts(db)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
 
-				return
-			}
+					return
+				}
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
 
-			err = json.NewEncoder(w).Encode(categorias)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
+				err = json.NewEncoder(w).Encode(products)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+
+					return
+				}
+			} else {
+				id, err := strconv.Atoi(r.Header.Get("id"))
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+
+					return
+				}
+
+				product, err := models.GetProductWithAllDetailsByID(db, id)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
+
+					return
+				}
+
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+
+				err = json.NewEncoder(w).Encode(product)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+
+					return
+				}
 			}
 
 		case "POST":
-			var categoria models.Categoria
+			var product models.Producto
 
-			err := json.NewDecoder(r.Body).Decode(&categoria)
+			err := json.NewDecoder(r.Body).Decode(&product)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -44,7 +73,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			err = models.CreateNewCategoria(db, categoria.Categoria)
+			err = models.CreateNewProduct(product, db)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -64,9 +93,9 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			}
 
 		case "PUT":
-			var categoria models.Categoria
+			var product models.Producto
 
-			err := json.NewDecoder(r.Body).Decode(&categoria)
+			err := json.NewDecoder(r.Body).Decode(&product)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -74,7 +103,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			err = models.UpdateCategoriaByID(db, r.Header.Get("id"), categoria.Categoria)
+			err = models.UpdateProductByID(db, product, r.Header.Get("id"))
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -94,7 +123,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			}
 
 		case "DELETE":
-			err := models.DeleteCategoriaByID(db, r.Header.Get("id"))
+			err := models.DeleteProductByID(db, r.Header.Get("id"))
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)

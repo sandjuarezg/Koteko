@@ -10,6 +10,8 @@ import (
 	"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/sandjuarezg/koteko/crud"
+	"github.com/sandjuarezg/koteko/login"
 	"github.com/sandjuarezg/koteko/models"
 	"github.com/sandjuarezg/koteko/ws"
 )
@@ -30,26 +32,32 @@ func main() {
 	defer db.Close()
 
 	http.Handle("/", http.FileServer(http.Dir("./public")))
+
 	http.Handle("/index", index(db))
 	http.Handle("/producto", producto(db))
 	http.Handle("/search", search(db))
 	http.Handle("/categoria", categoria(db))
 	http.Handle("/signin", signin(db))
-	http.Handle("/login", login(db))
 	http.Handle("/buy", buy(db))
 	http.Handle("/donation", donation(db))
-	http.Handle("/avisos", avisos(db))
 
+	// crud
+	http.Handle("/avisos", crud.Avisos(db))
+
+	// ws
 	http.Handle("/avisosWS", ws.AvisosWS(db))
 	http.Handle("/categoriasWS", ws.CategoriasWS(db))
-	// http.Handle("/coloresWS", avisosWS(db))
-	// http.Handle("/donacionesWS", avisosWS(db))
-	// http.Handle("/permisosWS", avisosWS(db))
-	// http.Handle("/productosWS", avisosWS(db))
-	// http.Handle("/rolesWS", avisosWS(db))
-	// http.Handle("/tiposWS", avisosWS(db))
-	// http.Handle("/usuariosWS", avisosWS(db))
-	// http.Handle("/ventasWS", avisosWS(db))
+	http.Handle("/coloresWS", ws.ColoresWS(db))
+	http.Handle("/permisosWS", ws.PermisosWS(db))
+	http.Handle("/productosWS", ws.ProductosWS(db))
+	http.Handle("/rolesWS", ws.RolesWS(db))
+	http.Handle("/tiposWS", ws.TiposWS(db))
+	http.Handle("/usuariosWS", ws.UsuariosWS(db))
+	http.Handle("/ventasWS", ws.VentasWS(db))
+
+	//login
+	http.Handle("/login", login.Login(db))
+	http.Handle("/permiso", login.Permiso(db))
 
 	fmt.Println("Listening on localhost:8080")
 
@@ -306,7 +314,7 @@ func signin(db *sql.DB) http.Handler {
 			Password: r.FormValue("password"),
 		}
 
-		err := models.Signin(us, db)
+		err := models.CreateNewUser(us, db)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -314,28 +322,7 @@ func signin(db *sql.DB) http.Handler {
 			return
 		}
 
-		return
-	})
-}
-
-func login(db *sql.DB) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-
-			return
-		}
-
-		defer fmt.Printf("Response from %s\n", r.URL.RequestURI())
-
-		if err := r.ParseForm(); err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-
-			return
-		}
-
-		user, err := models.Login(r.FormValue("email"), r.FormValue("password"), db)
+		t, err := template.ParseFiles("./public/html/account.html")
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -343,7 +330,13 @@ func login(db *sql.DB) http.Handler {
 			return
 		}
 
-		fmt.Println(user)
+		err = t.Execute(w, nil)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
 
 		return
 	})
@@ -398,7 +391,7 @@ func buy(db *sql.DB) http.Handler {
 			return
 		}
 
-		err = models.AddVenta(db, 1, cantidad, product)
+		err = models.CreateNewVenta(db, cantidad, product)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -469,7 +462,7 @@ func donation(db *sql.DB) http.Handler {
 
 		cantidad := r.FormValue("cantidad")
 
-		err := models.DoDonation(db, "1", cantidad)
+		err := models.DoDonation(db, cantidad)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -488,43 +481,6 @@ func donation(db *sql.DB) http.Handler {
 		err = t.Execute(w, nil)
 		if err != nil {
 			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-
-			return
-		}
-
-		return
-	})
-}
-
-func avisos(db *sql.DB) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-
-			return
-		}
-
-		defer fmt.Printf("Response from %s\n", r.URL.RequestURI())
-
-		avisos, err := models.GetAllAvisos(db)
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-
-			return
-		}
-
-		temp, err := template.ParseFiles("./public/admin/avisos.html")
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-
-			return
-		}
-
-		err = temp.Execute(w, avisos)
-		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return

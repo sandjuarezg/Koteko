@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 )
 
 // Producto structure for Producto
@@ -184,7 +185,7 @@ func GetProductWithAllDetailsByID(db *sql.DB, id int) (product Producto, err err
 //  @return1 (product): product
 //  @return2 (err): error variable
 func SearchProductWithAllDetailsByName(db *sql.DB, name string) (products []Producto, err error) {
-	rows, err := db.Query("SELECT id_producto, producto, descripcion, precio, img FROM productos WHERE producto like '%" + name + "%'")
+	rows, err := db.Query("SELECT id_producto, producto, descripcion, precio, img FROM productos WHERE producto like ?", fmt.Sprintf("%%%s%%", name))
 	if err != nil {
 		return
 	}
@@ -214,16 +215,68 @@ func SearchProductWithAllDetailsByName(db *sql.DB, name string) (products []Prod
 	return
 }
 
-func AddProduct() {
+func CreateNewProduct(product Producto, db *sql.DB) (err error) {
+	_, err = db.Exec(`
+		INSERT INTO productos(producto, descripcion, precio, cantidad, id_tipo, id_categoria) 
+		VALUES (?, ?, ?, ?, ?, ?)`,
+		product.Producto,
+		product.Descripcion,
+		product.Precio,
+		product.Cantidad,
+		product.Tipo,
+		product.Categoria,
+	)
+	if err != nil {
+		return
+	}
 
+	return
 }
 
-func EditProduct() {
+func DeleteProductByID(db *sql.DB, id string) (err error) {
+	row, err := db.Exec("DELETE from productos WHERE id_producto = ?", id)
+	if err != nil {
+		return
+	}
 
+	_, err = row.RowsAffected()
+	if err != nil {
+		return
+	}
+
+	return
 }
 
-func DeleteProduct() {
+func UpdateProductByID(db *sql.DB, product Producto, id string) (err error) {
+	row, err := db.Exec(`
+		UPDATE productos 
+			SET producto = ?,
+				descripcion = ?,
+				precio = ?,
+				cantidad = ?,
+				img = ?,
+				id_tipo = ?,
+				id_categoria = ?
+			WHERE id_producto = ?`,
+		product.Producto,
+		product.Descripcion,
+		product.Precio,
+		product.Cantidad,
+		product.Img,
+		product.Tipo,
+		product.Categoria,
+		id,
+	)
+	if err != nil {
+		return
+	}
 
+	_, err = row.RowsAffected()
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 func BuyProducts(db *sql.DB, id, cantidad int) (err error) {

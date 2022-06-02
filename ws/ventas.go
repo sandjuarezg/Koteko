@@ -10,13 +10,13 @@ import (
 	"github.com/sandjuarezg/koteko/models"
 )
 
-func CategoriasWS(db *sql.DB) http.Handler {
+func VentasWS(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer fmt.Printf("Response from %s:%s\n", r.URL.RequestURI(), r.Method)
 
 		switch r.Method {
 		case "GET":
-			categorias, err := models.GetAllCategorias(db)
+			ventas, err := models.GetAllVentas(db)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -27,16 +27,17 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 
-			err = json.NewEncoder(w).Encode(categorias)
+			err = json.NewEncoder(w).Encode(ventas)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
+
 				return
 			}
 
 		case "POST":
-			var categoria models.Categoria
+			var venta models.Venta
 
-			err := json.NewDecoder(r.Body).Decode(&categoria)
+			err := json.NewDecoder(r.Body).Decode(&venta)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -44,7 +45,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			err = models.CreateNewCategoria(db, categoria.Categoria)
+			product, err := models.GetProductWithAllDetailsByID(db, venta.IDProducto)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -52,34 +53,22 @@ func CategoriasWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
+			if r.Header.Get("id") == "" {
+				err = models.CreateNewVenta(db, venta.Cantidad, product)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
 
-			err = json.NewEncoder(w).Encode(Message{Body: "successful action"})
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			} else {
+				err = models.UpdateVentaByID(db, r.Header.Get("id"), venta.Cantidad, product)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
 
-				return
-			}
-
-		case "PUT":
-			var categoria models.Categoria
-
-			err := json.NewDecoder(r.Body).Decode(&categoria)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
-			}
-
-			err = models.UpdateCategoriaByID(db, r.Header.Get("id"), categoria.Categoria)
-			if err != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				return
+					return
+				}
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -94,7 +83,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			}
 
 		case "DELETE":
-			err := models.DeleteCategoriaByID(db, r.Header.Get("id"))
+			err := models.DeleteVentaByID(db, r.Header.Get("id"))
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)

@@ -10,13 +10,13 @@ import (
 	"github.com/sandjuarezg/koteko/models"
 )
 
-func CategoriasWS(db *sql.DB) http.Handler {
+func TiposWS(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer fmt.Printf("Response from %s:%s\n", r.URL.RequestURI(), r.Method)
 
 		switch r.Method {
 		case "GET":
-			categorias, err := models.GetAllCategorias(db)
+			tipos, err := models.GetAllTipos(db)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -27,16 +27,17 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 
-			err = json.NewEncoder(w).Encode(categorias)
+			err = json.NewEncoder(w).Encode(tipos)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
+
 				return
 			}
 
 		case "POST":
-			var categoria models.Categoria
+			var tipo models.Tipo
 
-			err := json.NewDecoder(r.Body).Decode(&categoria)
+			err := json.NewDecoder(r.Body).Decode(&tipo)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -44,7 +45,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			err = models.CreateNewCategoria(db, categoria.Categoria)
+			err = models.CreateNewTipo(db, tipo.Tipo)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -64,9 +65,9 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			}
 
 		case "PUT":
-			var categoria models.Categoria
+			var tipo models.Tipo
 
-			err := json.NewDecoder(r.Body).Decode(&categoria)
+			err := json.NewDecoder(r.Body).Decode(&tipo)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -74,7 +75,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 				return
 			}
 
-			err = models.UpdateCategoriaByID(db, r.Header.Get("id"), categoria.Categoria)
+			err = models.UpdateTipoByID(db, r.Header.Get("id"), tipo.Tipo)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -94,7 +95,7 @@ func CategoriasWS(db *sql.DB) http.Handler {
 			}
 
 		case "DELETE":
-			err := models.DeleteCategoriaByID(db, r.Header.Get("id"))
+			err := models.DeleteTipoByID(db, r.Header.Get("id"))
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
